@@ -65,6 +65,39 @@ function loadReleaseDataFile() {
     });
 }
 
+
+//This method combines the data for each organization.
+function aggregateData(releaseData) {
+
+    //Make sure we have data.
+    if (!releaseData || !Array.isArray(releaseData)) {
+        const err = "aggregateData: Invalid release data.";
+        console.log(err);
+
+        return Promise.reject(err);
+    }
+
+    //Loop through the releases.
+    let orgData = [];
+    releaseData.forEach(release => {
+        const orgIdx = orgData.findIndex(o=> o.organization === release.organization);
+        if(orgIdx < 0) {
+            //Create the organization record and add it to the data array.
+            orgData.push(createOrMergeOrganization(release))
+        }
+        else 
+        {
+            //Merge the existing organization.
+            orgData[orgIdx] = createOrMergeOrganization(release, orgData[orgIdx]);
+        }
+    });
+
+    //return the aggregated data.
+    return Promise.resolve(orgData);
+}
+
+
+//This method combines the data for a single organization.
 function createOrMergeOrganization(releaseOrg, mergeWith) {
 
     //Get the licenses for the current item.
@@ -103,35 +136,9 @@ function createOrMergeOrganization(releaseOrg, mergeWith) {
     return newOrg;
 }
 
-function aggregateData(releaseData) {
 
-    //Make sure we have data.
-    if (!releaseData || !Array.isArray(releaseData)) {
-        const err = "aggregateData: Invalid release data.";
-        console.log(err);
-
-        return Promise.reject(err);
-    }
-
-    //Loop through the releases.
-    let orgData = [];
-    releaseData.forEach(release => {
-        const orgIdx = orgData.findIndex(o=> o.organization === release.organization);
-        if(orgIdx < 0) {
-            //Create the organization record and add it to the data array.
-            orgData.push(createOrMergeOrganization(release))
-        }
-        else 
-        {
-            //Merge the existing organization.
-            orgData[orgIdx] = createOrMergeOrganization(release, orgData[orgIdx]);
-        }
-    });
-
-    //return the aggregated data.
-    return Promise.resolve(orgData);
-}
-
+//This method calculates the most active months. 
+//Only months with the highest number of releases are shown.
 function calcMostActiveMonths(orgData) {
 
     //Make sure we have data.
@@ -181,6 +188,7 @@ function calcMostActiveMonths(orgData) {
     return Promise.resolve(orgData);
 }
 
+//This method is used to sort the data.
 function sortResults(orgData, field, order){
 
     //Make sure we have data.
@@ -215,6 +223,7 @@ function sortResults(orgData, field, order){
 
 }
 
+//This method will get data from the API, aggregate, and sort it.
 function getAPIData(sortField, sortDir) {
 
     //Load the date from file. (API endpoint is not accessable because of CloudFront rules)
@@ -229,9 +238,10 @@ function getAPIData(sortField, sortDir) {
 
         //Sort the data.
         .then(aData => sortResults(aData, sortField, sortDir));
-
 }
 
+
+//JSON Route
 app.get('/organizations', function (req, res) {
 
     let sortField = req.query.sort;
@@ -258,6 +268,7 @@ app.get('/organizations', function (req, res) {
 
 });
 
+//CSV Route
 app.get('/organizations.csv', function (req, res) {
 
     let sortField = req.query.sort;
@@ -304,6 +315,7 @@ app.get('/organizations.csv', function (req, res) {
 
 });
 
+//Default routes for the webserver.
 app.get('/', function (req, res) {
     fs.readFile(__dirname + "/welcome.html", 'utf8', function (error, data) {
         res.type('html');
@@ -316,6 +328,7 @@ app.get('/style.css', function (req, res) {
         res.end(data);
     });
 });
+
 
 //Start the web API.
 var server = app.listen(8080, function () {
