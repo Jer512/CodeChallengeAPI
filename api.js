@@ -1,7 +1,8 @@
+'use strict';
+
 var express = require('express');
 var request = require('request');
 var fs = require("fs");
-const { resolve } = require('path');
 var app = express();
 
 const RELEASE_API_ENDPOINT = "https://www.energy.gov/sites/prod/files/2020/12/f81/code-12-15-2020.json";
@@ -180,7 +181,7 @@ function calcMostActiveMonths(orgData) {
     return Promise.resolve(orgData);
 }
 
-function sortResults(orgData, order){
+function sortResults(orgData, field, order){
 
     //Make sure we have data.
     if (!orgData || !Array.isArray(orgData)) {
@@ -190,8 +191,22 @@ function sortResults(orgData, order){
         return Promise.reject(err);
     }
 
+    let sorted = orgData;
+
+    //Sort the data by "release_count".
+    if(field === "release_count") {
+        sorted = orgData.sort((a, b) => a.release_count - b.release_count);
+    }
+    //Sort the data by "total_labor_hours".
+    else if(field === "total_labor_hours") {
+        sorted = orgData.sort((a, b) => a.total_labor_hours - b.total_labor_hours);
+    }
     //Sort the data by "organization".
-    let sorted = orgData.sort((a, b) => a.organization.localeCompare(b.organization));
+    else 
+    {
+        sorted = orgData.sort((a, b) => a.organization.localeCompare(b.organization));
+    }
+
     if(order === "desc"){
         sorted.reverse();
     }
@@ -200,7 +215,7 @@ function sortResults(orgData, order){
 
 }
 
-function getAPIData(sort) {
+function getAPIData(sortField, sortDir) {
 
     //Load the date from file. (API endpoint is not accessable because of CloudFront rules)
     //loadReleaseData()
@@ -213,16 +228,17 @@ function getAPIData(sort) {
         .then(aData => calcMostActiveMonths(aData))
 
         //Sort the data.
-        .then(aData => sortResults(aData, sort));
+        .then(aData => sortResults(aData, sortField, sortDir));
 
 }
 
-app.get('/json', function (req, res) {
+app.get('/organizations', function (req, res) {
 
-    let sort = req.query.sort;
+    let sortField = req.query.sort;
+    let sortOrder = req.query.order;
 
     //Return the final data.
-    getAPIData(sort)
+    getAPIData(sortField, sortOrder)
         .then(aData => {
             let resp = { organizations: [] };
 
@@ -242,12 +258,13 @@ app.get('/json', function (req, res) {
 
 });
 
-app.get('/csv', function (req, res) {
+app.get('/organizations.csv', function (req, res) {
 
-    let sort = req.query.sort;
+    let sortField = req.query.sort;
+    let sortOrder = req.query.order;
 
     //Return the final data.
-    getAPIData(sort)
+    getAPIData(sortField, sortOrder)
         .then(aData => {
 
             //CSV Value Replacer.
@@ -285,6 +302,19 @@ app.get('/csv', function (req, res) {
             res.end(JSON.stringify(err));
         });
 
+});
+
+app.get('/', function (req, res) {
+    fs.readFile(__dirname + "/welcome.html", 'utf8', function (error, data) {
+        res.type('html');
+        res.end(data);
+    });
+});
+app.get('/style.css', function (req, res) {
+    fs.readFile(__dirname + "/style.css", 'utf8', function (error, data) {
+        res.type('css');
+        res.end(data);
+    });
 });
 
 //Start the web API.
