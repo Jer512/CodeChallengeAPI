@@ -1,0 +1,16 @@
+{
+  "name": "code-challenge-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "Jeremy Herman",
+  "homepage": "https://www.linkedin.com/in/jeremydherman/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jer512/CodeChallengeAPI"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "request": "^2.88.2"
+  }
+}
