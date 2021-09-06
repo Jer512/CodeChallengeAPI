@@ -31,11 +31,11 @@ Run the docker image. You may need to update the port if 55728 is unavailable.
 docker run -p 55728:8080 -d intriguedme/codechallengeapi
 ```
 
-Once the docker is running open: [http://localhost:55728](http://localhost:55728/)
+Once the docker is running, open: [http://localhost:55728](http://localhost:55728/)
 
 
 ## Author
 
 * **Jeremy Herman** - [linkedin](https://www.linkedin.com/in/jeremydherman/)
 
-Repo - [Jer512](https://github.com/Jer512/CodeChallengeAPI/)
+* **Project Repo** - [Jer512](https://github.com/Jer512/CodeChallengeAPI/)
